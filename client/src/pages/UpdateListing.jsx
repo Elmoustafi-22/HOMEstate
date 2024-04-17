@@ -9,7 +9,9 @@ import { app } from '../firebase';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
+// Define the CreateListing component
 export default function CreateListing() {
+  // Define state variables
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const params = useParams();
@@ -33,6 +35,7 @@ export default function CreateListing() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Fetch listing data when component mounts
   useEffect(() => {
     const fetchListing = async () => {
       const listingId = params.listingId;
@@ -48,6 +51,7 @@ export default function CreateListing() {
     fetchListing();
   }, []);
 
+  // Handle image submission
   const handleImageSubmit = (e) => {
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
       setUploading(true);
@@ -76,6 +80,7 @@ export default function CreateListing() {
     }
   };
 
+  // Store image in Firebase storage
   const storeImage = async (file) => {
     return new Promise((resolve, reject) => {
       const storage = getStorage(app);
@@ -101,6 +106,7 @@ export default function CreateListing() {
     });
   };
 
+  // Handle removing image from the form
   const handleRemoveImage = (index) => {
     setFormData({
       ...formData,
@@ -108,6 +114,7 @@ export default function CreateListing() {
     });
   };
 
+  // Handle form input changes
   const handleChange = (e) => {
     if (e.target.id === 'sale' || e.target.id === 'rent') {
       setFormData({
@@ -139,6 +146,7 @@ export default function CreateListing() {
     }
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -169,6 +177,8 @@ export default function CreateListing() {
       setLoading(false);
     }
   };
+
+  // Render the CreateListing component JSX
   return (
     <main className='p-3 max-w-4xl mx-auto'>
       <h1 className='text-3xl font-semibold text-center my-7'>
@@ -176,6 +186,7 @@ export default function CreateListing() {
       </h1>
       <form onSubmit={handleSubmit} className='flex flex-col sm:flex-row gap-4'>
         <div className='flex flex-col gap-4 flex-1'>
+          {/* Input fields for listing details */}
           <input
             type='text'
             placeholder='Name'
@@ -206,6 +217,7 @@ export default function CreateListing() {
             value={formData.address}
           />
           <div className='flex gap-6 flex-wrap'>
+            {/* Checkbox inputs for listing type, amenities */}
             <div className='flex gap-2'>
               <input
                 type='checkbox'
@@ -258,6 +270,7 @@ export default function CreateListing() {
             </div>
           </div>
           <div className='flex flex-wrap gap-6'>
+            {/* Number inputs for bedrooms, bathrooms, prices */}
             <div className='flex items-center gap-2'>
               <input
                 type='number'
@@ -325,6 +338,7 @@ export default function CreateListing() {
           </div>
         </div>
         <div className='flex flex-col flex-1 gap-4'>
+          {/* Image upload section */}
           <p className='font-semibold'>
             Images:
             <span className='font-normal text-gray-600 ml-2'>
@@ -352,6 +366,7 @@ export default function CreateListing() {
           <p className='text-red-700 text-sm'>
             {imageUploadError && imageUploadError}
           </p>
+          {/* Display uploaded images */}
           {formData.imageUrls.length > 0 &&
             formData.imageUrls.map((url, index) => (
               <div
@@ -372,6 +387,7 @@ export default function CreateListing() {
                 </button>
               </div>
             ))}
+          {/* Submit button and error message */}
           <button
             disabled={loading || uploading}
             className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80'

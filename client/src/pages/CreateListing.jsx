@@ -1,3 +1,4 @@
+// Import necessary modules from React, Firebase, Redux, and React Router DOM
 import { useState } from 'react';
 import {
   getDownloadURL,
@@ -9,94 +10,110 @@ import { app } from '../firebase';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+// Define the CreateListing function component
 export default function CreateListing() {
-  const { currentUser } = useSelector((state) => state.user);
-  const navigate = useNavigate();
-  const [files, setFiles] = useState([]);
-  const [formData, setFormData] = useState({
-    imageUrls: [],
-    name: '',
-    description: '',
-    address: '',
-    type: 'rent',
-    bedrooms: 1,
-    bathrooms: 1,
-    regularPrice: 50,
-    discountPrice: 0,
-    offer: false,
-    parking: false,
-    furnished: false,
+  // State management using useState hook
+  const { currentUser } = useSelector((state) => state.user); // Get current user from Redux store
+  const navigate = useNavigate(); // Access navigation function from React Router
+  const [files, setFiles] = useState([]); // State for managing uploaded files
+  const [formData, setFormData] = useState({ // State for managing form data
+    imageUrls: [], // Array to store image URLs
+    name: '', // Listing name
+    description: '', // Listing description
+    address: '', // Listing address
+    type: 'rent', // Listing type (default: rent)
+    bedrooms: 1, // Number of bedrooms (default: 1)
+    bathrooms: 1, // Number of bathrooms (default: 1)
+    regularPrice: 50, // Regular price (default: $50)
+    discountPrice: 0, // Discounted price (default: $0)
+    offer: false, // Offer status (default: false)
+    parking: false, // Parking availability (default: false)
+    furnished: false, // Furnishing status (default: false)
   });
-  const [imageUploadError, setImageUploadError] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
-  console.log(formData);
+  const [imageUploadError, setImageUploadError] = useState(false); // State for managing image upload errors
+  const [uploading, setUploading] = useState(false); // State for tracking upload status
+  const [error, setError] = useState(false); // State for managing general errors
+  const [loading, setLoading] = useState(false); // State for tracking loading status
+
+  // Function to handle image submission
   const handleImageSubmit = (e) => {
+    // Check if files are selected and within upload limit
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
-      setUploading(true);
-      setImageUploadError(false);
+      setUploading(true); // Set uploading status to true
+      setImageUploadError(false); // Clear previous upload errors
       const promises = [];
 
+      // Upload each file to storage
       for (let i = 0; i < files.length; i++) {
-        promises.push(storeImage(files[i]));
+        promises.push(storeImage(files[i])); // Push promise to array
       }
+      
+      // Handle promises after all uploads are completed
       Promise.all(promises)
         .then((urls) => {
+          // Concatenate new image URLs with existing ones
           setFormData({
             ...formData,
             imageUrls: formData.imageUrls.concat(urls),
           });
-          setImageUploadError(false);
-          setUploading(false);
+          setImageUploadError(false); // Clear upload error
+          setUploading(false); // Reset uploading status
         })
         .catch((err) => {
-          setImageUploadError('Image upload failed (2 mb max per image)');
-          setUploading(false);
+          setImageUploadError('Image upload failed (2 mb max per image)'); // Set upload error
+          setUploading(false); // Reset uploading status
         });
     } else {
+      // Display error if upload limit is exceeded
       setImageUploadError('You can only upload 6 images per listing');
-      setUploading(false);
+      setUploading(false); // Reset uploading status
     }
   };
 
+  // Function to upload image to Firebase storage
   const storeImage = async (file) => {
     return new Promise((resolve, reject) => {
-      const storage = getStorage(app);
-      const fileName = new Date().getTime() + file.name;
-      const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const storage = getStorage(app); // Get Firebase storage reference
+      const fileName = new Date().getTime() + file.name; // Generate unique file name
+      const storageRef = ref(storage, fileName); // Create storage reference
+      const uploadTask = uploadBytesResumable(storageRef, file); // Upload file to storage
+
+      // Track upload progress and completion
       uploadTask.on(
         'state_changed',
         (snapshot) => {
           const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Upload is ${progress}% done`);
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100; // Calculate upload progress
+          console.log(`Upload is ${progress}% done`); // Log upload progress
         },
         (error) => {
-          reject(error);
+          reject(error); // Reject promise if error occurs
         },
         () => {
+          // Resolve promise with download URL upon successful upload
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
+            resolve(downloadURL); // Resolve promise with download URL
           });
         }
       );
     });
   };
 
+  // Function to remove image from form data
   const handleRemoveImage = (index) => {
     setFormData({
       ...formData,
-      imageUrls: formData.imageUrls.filter((_, i) => i !== index),
+      imageUrls: formData.imageUrls.filter((_, i) => i !== index), // Filter out image at specified index
     });
   };
 
+  // Function to handle form input changes
   const handleChange = (e) => {
+    // Update form data based on input type and ID
     if (e.target.id === 'sale' || e.target.id === 'rent') {
       setFormData({
         ...formData,
-        type: e.target.id,
+        type: e.target.id, // Update listing type
       });
     }
 
@@ -107,7 +124,7 @@ export default function CreateListing() {
     ) {
       setFormData({
         ...formData,
-        [e.target.id]: e.target.checked,
+        [e.target.id]: e.target.checked, // Update checkbox values
       });
     }
 
@@ -118,20 +135,25 @@ export default function CreateListing() {
     ) {
       setFormData({
         ...formData,
-        [e.target.id]: e.target.value,
+        [e.target.id]: e.target.value, // Update input field values
       });
     }
   };
 
+  // Function to handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission behavior
     try {
+      // Validate form data before submission
       if (formData.imageUrls.length < 1)
-        return setError('You must upload at least one image');
+        return setError('You must upload at least one image'); // Display error if no images uploaded
       if (+formData.regularPrice < +formData.discountPrice)
-        return setError('Discount price must be lower than regular price');
-      setLoading(true);
-      setError(false);
+        return setError('Discount price must be lower than regular price'); // Display error if discount price is higher than regular price
+      
+      setLoading(true); // Set loading status to true
+      setError(false); // Clear previous errors
+
+      // Send form data to server for processing
       const res = await fetch('/api/listing/create', {
         method: 'POST',
         headers: {
@@ -139,26 +161,34 @@ export default function CreateListing() {
         },
         body: JSON.stringify({
           ...formData,
-          userRef: currentUser._id,
+          userRef: currentUser._id, // Pass user ID with form data
         }),
       });
-      const data = await res.json();
-      setLoading(false);
+      
+      const data = await res.json(); // Parse response data
+      
+      setLoading(false); // Reset loading status
+      
+      // Handle response data
       if (data.success === false) {
-        setError(data.message);
+        setError(data.message); // Display error message if request failed
       }
-      navigate(`/listing/${data._id}`);
+      
+      navigate(`/listing/${data._id}`); // Redirect to created listing
     } catch (error) {
-      setError(error.message);
-      setLoading(false);
+      setError(error.message); // Display error if request fails
+      setLoading(false); // Reset loading status
     }
   };
+
+  // Render the form for creating a listing
   return (
     <main className='p-3 max-w-4xl mx-auto'>
       <h1 className='text-3xl font-semibold text-center my-7'>
         Create a Listing
       </h1>
       <form onSubmit={handleSubmit} className='flex flex-col sm:flex-row gap-4'>
+        {/* Form inputs for listing details */}
         <div className='flex flex-col gap-4 flex-1'>
           <input
             type='text'
@@ -189,6 +219,7 @@ export default function CreateListing() {
             onChange={handleChange}
             value={formData.address}
           />
+          {/* Checkboxes for listing attributes */}
           <div className='flex gap-6 flex-wrap'>
             <div className='flex gap-2'>
               <input
@@ -241,6 +272,7 @@ export default function CreateListing() {
               <span>Offer</span>
             </div>
           </div>
+          {/* Input fields for bedrooms, bathrooms, and prices */}
           <div className='flex flex-wrap gap-6'>
             <div className='flex items-center gap-2'>
               <input
@@ -281,11 +313,13 @@ export default function CreateListing() {
               />
               <div className='flex flex-col items-center'>
                 <p>Regular price</p>
+                {/* Display price unit for rental listings */}
                 {formData.type === 'rent' && (
                   <span className='text-xs'>($ / month)</span>
                 )}
               </div>
             </div>
+            {/* Display discounted price field if offer is selected */}
             {formData.offer && (
               <div className='flex items-center gap-2'>
                 <input
@@ -300,7 +334,7 @@ export default function CreateListing() {
                 />
                 <div className='flex flex-col items-center'>
                   <p>Discounted price</p>
-
+                  {/* Display price unit for rental listings */}
                   {formData.type === 'rent' && (
                     <span className='text-xs'>($ / month)</span>
                   )}
@@ -309,7 +343,9 @@ export default function CreateListing() {
             )}
           </div>
         </div>
+        {/* Section for managing images */}
         <div className='flex flex-col flex-1 gap-4'>
+          {/* Image upload input */}
           <p className='font-semibold'>
             Images:
             <span className='font-normal text-gray-600 ml-2'>
@@ -325,6 +361,7 @@ export default function CreateListing() {
               accept='image/*'
               multiple
             />
+            {/* Button to trigger image upload */}
             <button
               type='button'
               disabled={uploading}
@@ -334,9 +371,11 @@ export default function CreateListing() {
               {uploading ? 'Uploading...' : 'Upload'}
             </button>
           </div>
+          {/* Display image upload error */}
           <p className='text-red-700 text-sm'>
             {imageUploadError && imageUploadError}
           </p>
+          {/* Display uploaded images with option to delete */}
           {formData.imageUrls.length > 0 &&
             formData.imageUrls.map((url, index) => (
               <div
@@ -348,6 +387,7 @@ export default function CreateListing() {
                   alt='listing image'
                   className='w-20 h-20 object-contain rounded-lg'
                 />
+                {/* Button to remove image */}
                 <button
                   type='button'
                   onClick={() => handleRemoveImage(index)}
@@ -357,12 +397,14 @@ export default function CreateListing() {
                 </button>
               </div>
             ))}
+          {/* Button to submit listing */}
           <button
             disabled={loading || uploading}
             className='p-3 bg-teal-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80'
           >
             {loading ? 'Creating...' : 'Create listing'}
           </button>
+          {/* Display general form submission error */}
           {error && <p className='text-red-700 text-sm'>{error}</p>}
         </div>
       </form>

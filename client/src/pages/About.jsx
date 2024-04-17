@@ -1,6 +1,8 @@
 import React from 'react';
 
+// Define the About component
 export default function About(){
+    // Render the About component JSX
     return (
         <div className='py-20 px-4 max-w-6xl mx-auto'>
             <h1 className='text-3xl font-bold mb-4 text-teal-800'>About HOMEstate</h1>
@@ -19,7 +21,6 @@ export default function About(){
             <p className='mb-4 text-teal-700'>
                 Thank you for considering HOMEstate for your real estate needs. We look forward to helping you find the perfect place to call home.
             </p>
-
         </div>
-    )
+    );
 }
